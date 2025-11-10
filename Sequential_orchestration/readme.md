@@ -4,7 +4,7 @@
 The sequential orchestration pattern organizes agents in a pipeline. Each agent processes the task in turn, passing its output to the next agent. This is ideal for workflows where each step builds upon the previous one, such as document review or multi-stage reasoning.
 
 **Sequential orchestration workflow**  
-![alt text](https://github.com/[username]/[reponame]/blob/[branch]/image.jpg?raw=true)
+!(https://github.com/cloudalchemy-ai/MAF/blob/main/Sequential_orchestration/Image.jpg?raw=true)
 **Key Features**
 
 1. Agents  
