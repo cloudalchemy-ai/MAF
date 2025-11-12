@@ -8,7 +8,6 @@ from typing import cast
 
 from agent_framework import ChatMessage, Role, SequentialBuilder, WorkflowOutputEvent
 from agent_framework.azure import AzureOpenAIChatClient
-from azure.identity import AzureCliCredential
 
 
 PROMPT = "Just finished my morning workout. Feeling good about staying consistent with my fitness routine. It's been 3 weeks now and I can see some progress. Anyone else trying to stay motivated?"
@@ -20,7 +19,7 @@ async def get_social_media_agents(prompt: str) -> list[ChatMessage]:
     2. OptimizerAgent: Creates an improved version based on the analysis
     3. ReviewerAgent: Final review and polish for maximum engagement
     """
-    chat_client = AzureOpenAIChatClient(credential=AzureCliCredential())
+    chat_client = AzureOpenAIChatClient()
     # Agent 1-Analyzer Agent
     analyzer_agent = chat_client.create_agent(
         instructions=("You are a social media analyst. Given a social media post, analyze and identify:\n"

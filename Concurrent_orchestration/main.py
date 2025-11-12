@@ -3,14 +3,13 @@ from collections.abc import Sequence
 from typing import cast
 from agent_framework import ChatMessage, ConcurrentBuilder, WorkflowOutputEvent
 from agent_framework.azure import AzureOpenAIChatClient
-from azure.identity import AzureCliCredential
 
 
 PROMPT = "Plan a trip to paris."
 
 
 async def run_agent_framework_example(prompt: str) -> Sequence[list[ChatMessage]]:
-    chat_client = AzureOpenAIChatClient(credential=AzureCliCredential())
+    chat_client = AzureOpenAIChatClient()
     # Agent 1 - Food agent
     food_agent = chat_client.create_agent(
         instructions=("You are a culinary and dining expert. For any travel destination, suggest:\n"
