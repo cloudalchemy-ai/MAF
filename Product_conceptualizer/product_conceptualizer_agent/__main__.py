@@ -9,10 +9,7 @@ from a2a.types import (
     AgentCard,
     AgentSkill,
 )
-# We will create/modify 'conceptualizer_agent.py' to define the ADK Agent itself
-from agent import create_conceptualizer_agent # Renamed from create_agent
-# from agent_executor import KarleyAgentExecutor # Not needed for our new use case
-
+from agent import create_conceptualizer_agent 
 from dotenv import load_dotenv
 from google.adk.artifacts import InMemoryArtifactService
 from google.adk.memory.in_memory_memory_service import InMemoryMemoryService
@@ -83,9 +80,6 @@ def main():
             memory_service=InMemoryMemoryService(),
         )
         agent_executor = ProductConceptualizerAgentExecutor(runner)
-        # KarleyAgentExecutor is specific to the old example, remove it
-        # You might have your own custom executor if needed, but DefaultRequestHandler is usually sufficient
-        # agent_executor = KarleyAgentExecutor(runner) 
 
         # --- Set up the A2A Request Handler and Server ---
         # DefaultRequestHandler takes the ADK Runner to process incoming A2A messages

@@ -3,7 +3,7 @@ from typing import Dict, List, Any
 import asyncio
 from google.adk.agents import LlmAgent
 
-# --- Product Conceptualizer Tool ---
+# Product Conceptualizer Tool
 def generate_product_concept_tool(
     business_type: str,
     target_audience: str,
@@ -26,7 +26,7 @@ def generate_product_concept_tool(
 
 
 
-# --- ADK Agent Definition ---
+# ADK Agent Definition
 def create_conceptualizer_agent() -> LlmAgent:
     """Constructs and returns the Product Conceptualizer Agent with streaming support."""
     return LlmAgent(
@@ -44,6 +44,7 @@ Your responsibility is to transform an initial **specific product idea** into a 
 **Important Rules:**  
 - No generic placeholders: every field must be product-specific.
 - Final response must be a well-formed dictionary, never free text.
+- Do not ask any clarifying questions; work with the provided inputs only.  
 """,
         tools=[generate_product_concept_tool],
     )

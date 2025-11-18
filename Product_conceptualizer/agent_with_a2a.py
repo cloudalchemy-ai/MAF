@@ -1,42 +1,10 @@
-# Copyright (c) Microsoft. All rights reserved.
-
 import asyncio
 import os
-
 import httpx
 from a2a.client import A2ACardResolver
 from agent_framework.a2a import A2AAgent
-
-"""
-Agent2Agent (A2A) Protocol Integration Sample
-
-This sample demonstrates how to connect to and communicate with external agents using
-the A2A protocol. A2A is a standardized communication protocol that enables interoperability
-between different agent systems, allowing agents built with different frameworks and
-technologies to communicate seamlessly.
-
-For more information about the A2A protocol specification, visit: https://a2a-protocol.org/latest/
-
-Key concepts demonstrated:
-- Discovering A2A-compliant agents using AgentCard resolution
-- Creating A2AAgent instances to wrap external A2A endpoints
-- Converting Agent Framework messages to A2A protocol format
-- Handling A2A responses (Messages and Tasks) back to framework types
-
-To run this sample:
-1. Set the A2A_AGENT_HOST environment variable to point to an A2A-compliant agent endpoint
-   Example: export A2A_AGENT_HOST="https://your-a2a-agent.example.com"
-2. Ensure the target agent exposes its AgentCard at /.well-known/agent.json
-3. Run: uv run python agent_with_a2a.py
-
-The sample will:
-- Connect to the specified A2A agent endpoint
-- Retrieve and parse the agent's capabilities via its AgentCard
-- Send a message using the A2A protocol
-- Display the agent's response
-
-Visit the README.md for more details on setting up and running A2A agents.
-"""
+from dotenv import load_dotenv
+load_dotenv()
 
 
 async def main():
@@ -64,15 +32,17 @@ async def main():
             url=a2a_agent_host,
         )
 
-        # Invoke the agent and output the result
+        # Get live user input
+        user_prompt = input("\nWhat is your product idea? ")
+
+        # Send message to A2A agent
         print("\nSending message to A2A agent...")
-        response = await agent.run("Tell me a joke about a pirate.")
+        response = await agent.run(user_prompt)
 
         # Print the response
         print("\nAgent Response:")
         for message in response.messages:
             print(message.text)
-
 
 if __name__ == "__main__":
     asyncio.run(main())
