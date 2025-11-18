@@ -1,7 +1,6 @@
-google-adk
+google-adk==1.18.0
 a2a==0.44
-google-adk
-google-genai
-uvicorn
-python-dotenv
-agent-framework
+google-genai==1.51.0
+uvicorn==0.38.0
+python-dotenv==1.2.1
+agent-framework==1.0.0b251114
