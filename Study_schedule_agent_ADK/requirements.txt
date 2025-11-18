@@ -1,0 +1,7 @@
+google-adk
+a2a==0.44
+google-adk
+google-genai
+uvicorn
+python-dotenv
+agent-framework
