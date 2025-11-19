@@ -31,7 +31,7 @@ Your project should look like this :
 
 → remote\_agent
 
-	→ \_\_init\_\_.py
+→ \_\_init\_\_.py
 
 → agent.py
 
