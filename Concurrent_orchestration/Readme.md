@@ -15,11 +15,11 @@ The concurrent orchestration pattern enables multiple agents to work on the same
 
 Before starting, make sure you have:
 
-* Azure openAI Credentials in env.  
-  * AZURE\_OPENAI\_API\_KEY\="YOUR\_API\_KEY"  
-  * AZURE\_OPENAI\_ENDPOINT\="YOUR ENDPOINT"  
-  * AZURE\_OPENAI\_CHAT\_DEPLOYMENT\_NAME\="gpt-4o"  
-  * AZURE\_OPENAI\_API\_VERSION\="2024-12-01-preview"  
+* Logged in on Azure using AZ login.  
+* Azure, AzureOpenAI and OpenAI Credentials in env.  
+  * AZURE\_AI\_PROJECT\_ENDPOINT\="YOUR\_ENDPOINT"  
+  * AZURE\_AI\_MODEL\_DEPLOYMENT\_NAME\="YOUR\_DEPLOYMENT\_NAME"  
+  * OPENAI\_API\_KEY="YOUR\_API\_KEY"  
 * Agent-framework installed.  
   * pip install agent-framework 
 
