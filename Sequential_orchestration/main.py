@@ -7,21 +7,22 @@ from collections.abc import Sequence
 from typing import cast
 
 from agent_framework import ChatMessage, Role, SequentialBuilder, WorkflowOutputEvent
-from agent_framework.azure import AzureOpenAIChatClient
+from agent_framework.azure import AzureAIClient
+from azure.identity.aio import AzureCliCredential
 
 
 PROMPT = "Just finished my morning workout. Feeling good about staying consistent with my fitness routine. It's been 3 weeks now and I can see some progress. Anyone else trying to stay motivated?"
 
 async def get_social_media_agents(prompt: str) -> list[ChatMessage]:
+    credential = AzureCliCredential()
     """
     Define three agents for social media post optimization:
     1. AnalyzerAgent: Analyzes the original post for tone, engagement factors, and issues
     2. OptimizerAgent: Creates an improved version based on the analysis
     3. ReviewerAgent: Final review and polish for maximum engagement
     """
-    chat_client = AzureOpenAIChatClient()
     # Agent 1-Analyzer Agent
-    analyzer_agent = chat_client.create_agent(
+    analyzer_agent = AzureAIClient(credential=credential).create_agent(
         instructions=("You are a social media analyst. Given a social media post, analyze and identify:\n"
             "- Current tone and style\n"
             "- Engagement potential (hashtags, call-to-action, emotional appeal)\n"
@@ -32,7 +33,7 @@ async def get_social_media_agents(prompt: str) -> list[ChatMessage]:
         name="AnalyzerAgent",
     )
     # Agent 2-Optimizer Agent
-    optimizer_agent = chat_client.create_agent(
+    optimizer_agent = AzureAIClient(credential=credential).create_agent(
         instructions=("You are a social media content optimizer. Based on the analysis provided, "
             "create an improved version of the original social media post that:\n"
             "- Enhances engagement potential\n"
@@ -44,7 +45,7 @@ async def get_social_media_agents(prompt: str) -> list[ChatMessage]:
         name="OptimizerAgent",
     )
     # Agent 3-Reviewer Agent
-    reviewer_agent = chat_client.create_agent(
+    reviewer_agent = AzureAIClient(credential=credential).create_agent(
         instructions=("You are a social media content reviewer. Review the optimized post and make final improvements:\n"
             "- Ensure perfect grammar and spelling\n"
             "- Optimize hashtag placement and relevance\n"
