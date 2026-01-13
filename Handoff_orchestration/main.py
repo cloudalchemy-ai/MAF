@@ -1,6 +1,3 @@
-# Copyright (c) Microsoft. All rights reserved.
-"""Side-by-side handoff orchestrations for Semantic Kernel and Agent Framework."""
-
 import asyncio
 import sys
 from collections.abc import AsyncIterable, Iterator, Sequence

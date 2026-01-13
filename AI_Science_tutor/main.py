@@ -1,5 +1,3 @@
-# Copyright (c) Microsoft. All rights reserved.
-
 import asyncio
 from agent_framework.openai import OpenAIAssistantsClient
 

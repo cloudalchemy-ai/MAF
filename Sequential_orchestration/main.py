@@ -1,6 +1,3 @@
-# Copyright (c) Microsoft. All rights reserved.
-
-"""Side-by-side sequential orchestrations for Agent Framework and Semantic Kernel."""
 
 import asyncio
 from collections.abc import Sequence

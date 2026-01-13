@@ -7,8 +7,6 @@ from agent_framework.azure import AzureAIClient
 from azure.identity.aio import AzureCliCredential
 from agent_framework.openai import OpenAIAssistantsClient
 from agent_framework import (
-    ExecutorCompletedEvent,
-    ExecutorInvokedEvent,
     WorkflowOutputEvent,
     handler,
 )
