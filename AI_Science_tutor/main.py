@@ -1,4 +1,4 @@
-# A Python Code for an AI Science Tutor using OpenAI Assistants Client
+# A Python Code for an AI Science Tutor using OpenAI Assistants Clients
 
 import asyncio
 import sys
