@@ -2,10 +2,13 @@
 import asyncio
 from collections.abc import Sequence
 from typing import cast
-
+import sys
 from agent_framework import ChatMessage, Role, SequentialBuilder, WorkflowOutputEvent
 from agent_framework.azure import AzureAIClient
 from azure.identity.aio import AzureCliCredential
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 PROMPT = "Just finished my morning workout. Feeling good about staying consistent with my fitness routine. It's been 3 weeks now and I can see some progress. Anyone else trying to stay motivated?"

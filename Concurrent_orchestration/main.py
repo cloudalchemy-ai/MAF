@@ -1,59 +1,22 @@
 import asyncio
 from collections.abc import Sequence
+import sys
 from typing import cast
 from agent_framework import ChatMessage, ConcurrentBuilder, WorkflowOutputEvent
 from agent_framework.azure import AzureOpenAIChatClient
 from agent_framework.azure import AzureAIClient
 from azure.identity.aio import AzureCliCredential
-from agent_framework.openai import OpenAIAssistantsClient
+from agent_framework.openai import OpenAIResponsesClient
 from agent_framework import (
-    ExecutorCompletedEvent,
-    ExecutorInvokedEvent,
     WorkflowOutputEvent,
     handler,
 )
 from typing import Any, cast
 
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 PROMPT = "Plan a trip to paris."
-
-def format_io_data(data: Any, detailed: bool = False) -> str:
-    """Format executor I/O data for display.
-
-    This helper formats common data types for readable output.
-    Customize based on the types used in your workflow.
-    """
-    type_name = type(data).__name__
-
-    if data is None:
-        return "None"
-    if isinstance(data, str):
-        preview = data[:100] + "..." if len(data) > 100 else data
-        return f"{type_name}: '{preview}'"
-    if isinstance(data, ChatMessage):
-        content = data.text[:150] + "..." if len(data.text) > 150 else data.text
-        author = data.author_name or "assistant"
-        return f"ChatMessage from '{author}': {content}"
-    if isinstance(data, list):
-        data_list = cast(list[Any], data)
-        if len(data_list) == 0:
-            return f"{type_name}: []"
-        # Check if it's a list of ChatMessages
-        if data_list and isinstance(data_list[0], ChatMessage):
-            if detailed:
-                formatted = []
-                for msg in data_list:
-                    author = msg.author_name or "assistant"
-                    content = msg.text[:100] + "..." if len(msg.text) > 100 else msg.text
-                    formatted.append(f"\n      - [{author}]: {content}")
-                return f"{type_name} with {len(data_list)} messages:{''.join(formatted)}"
-            return f"{type_name}: [{len(data_list)} ChatMessages]"
-        # For other lists, show items with types
-        if len(data_list) <= 3:
-            items = [format_io_data(item) for item in data_list]
-            return f"{type_name}: [{', '.join(items)}]"
-        return f"{type_name}: [{len(data_list)} items]"
-    return f"{type_name}: {type(data).__name__}"
-
 
 async def run_agent_framework_example(prompt: str) -> Sequence[list[ChatMessage]]:
     chat_client = AzureOpenAIChatClient()
@@ -107,7 +70,7 @@ async def run_agent_framework_example(prompt: str) -> Sequence[list[ChatMessage]
         name = "TransportExpert",
     )
     # Agent 5 - Budgeting Agent
-    budget_agent = OpenAIAssistantsClient().create_agent(
+    budget_agent = OpenAIResponsesClient().create_agent(
         instructions = (  # Instructions for budgeting and cost-saving
             "You are a travel budgeting and cost-saving expert. For any destination, provide:\n"
             "- Average daily budget estimates (accommodation, food, activities, transport)\n"
@@ -121,30 +84,15 @@ async def run_agent_framework_example(prompt: str) -> Sequence[list[ChatMessage]
     )
     #defining the workflow with all 5 agents
     workflow = ConcurrentBuilder().participants([food_agent, accodomation_agent, activities_agent, transport_agent, budget_agent]).build()
-    #####
-    print("Running workflow with executor I/O observation...\n")
 
     outputs: list[list[ChatMessage]] = []
-    
     async for event in workflow.run_stream(prompt):
-        if isinstance(event, ExecutorInvokedEvent):
-            # The input message received by the executor is in event.data
-            print(f"[INVOKED] {event.executor_id}")
-            print(f"    Input: {format_io_data(event.data, detailed=True)}")
-
-        elif isinstance(event, ExecutorCompletedEvent):
-            # Messages sent via ctx.send_message() are in event.data
-            print(f"[COMPLETED] {event.executor_id}")
-            if event.data:
-                print(f"    Output: {format_io_data(event.data, detailed=True)}")
-
-        elif isinstance(event, WorkflowOutputEvent):
-            print(f"\n[WORKFLOW OUTPUT] {format_io_data(event.data)}")
+        if isinstance(event, WorkflowOutputEvent):
             outputs.append(cast(list[ChatMessage], event.data))
-    
-    print("\n" + "="*80)
-    ########
+
     return outputs
+
+
 
 #printing the outputs from agent framework
 def _print_agent_framework_outputs(conversations: Sequence[Sequence[ChatMessage]]) -> None:
@@ -173,3 +121,4 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
