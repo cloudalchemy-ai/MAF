@@ -1,3 +1,5 @@
+# A Python Code for an AI Science Tutor using OpenAI Assistants Client
+
 import asyncio
 import sys
 from agent_framework.openai import OpenAIResponsesClient
