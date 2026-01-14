@@ -20,7 +20,8 @@ Before starting, make sure you have:
   * AZURE\_AI\_PROJECT\_ENDPOINT\="YOUR\_ENDPOINT"  
   * AZURE\_AI\_MODEL\_DEPLOYMENT\_NAME\="YOUR\_DEPLOYMENT\_NAME"  
   * OPENAI\_API\_KEY="YOUR\_API\_KEY"  
+  * OPENAI\_RESPONSES\_MODEL\_ID\="gpt-4o"  
 * Agent-framework installed.  
   * pip install agent-framework 
 
- 
+  
