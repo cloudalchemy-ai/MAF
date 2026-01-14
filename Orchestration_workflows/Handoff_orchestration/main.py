@@ -92,7 +92,7 @@ async def run_agent_framework_example(initial_task: str, scripted_responses: Seq
     support, billing, technical, supervisor = _create_af_agents(client)
 
     workflow = (
-        HandoffBuilder(name="sk_af_handoff_migration", participants=[support, billing, technical, supervisor], )
+        HandoffBuilder(name="af_handoff_migration", participants=[support, billing, technical, supervisor], )
         .set_coordinator(support)
         .add_handoff(support, [billing, technical, supervisor])
         .add_handoff(billing, [technical, support])
