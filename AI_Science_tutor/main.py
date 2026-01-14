@@ -1,6 +1,6 @@
 import asyncio
 import sys
-from agent_framework.openai import OpenAIAssistantsClient
+from agent_framework.openai import OpenAIResponsesClient
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -19,7 +19,7 @@ async def non_streaming_example() -> None:
 
     # Since no assistant ID is provided, the assistant will be automatically created
     # and deleted after getting a response
-    async with OpenAIAssistantsClient().create_agent(
+    async with OpenAIResponsesClient().create_agent(
         instructions="You are an AI Science tutor that explains complex science topics in simple terms. Use analogies and examples to make concepts easy to understand.",
     ) as agent:
         query = "Explain the theory of relativity."
@@ -34,7 +34,7 @@ async def streaming_example() -> None:
 
     # Since no assistant ID is provided, the assistant will be automatically created
     # and deleted after getting a response
-    async with OpenAIAssistantsClient().create_agent(
+    async with OpenAIResponsesClient().create_agent(
         instructions="You are an AI Science tutor that explains complex science topics in simple terms. Use analogies and examples to make concepts easy to understand.",
     ) as agent:
         query = "Explain the Pythagorean theorem."
