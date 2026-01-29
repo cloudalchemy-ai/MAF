@@ -4,7 +4,7 @@
 The calendar is generated using the Microsoft Agent Framework (MAF). When requested, the study-schedule agent creates a customized schedule based on user requirements while considering the calendar,  through the Google ADK. In this setup, the A2A agent is integrated as an MAF agent.
 
 **A2A Integration Workflow**  
-<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Study_schedule_agent_ADK/Image.jpg?raw=true" alt="Study schedule agent" width="700"/>
+<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Orchestration_workflows/Concurrent_orchestration/Image.jpg?raw=true" alt="Study schedule agent" width="700"/>
 
 **Key Features**
 

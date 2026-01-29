@@ -5,7 +5,7 @@ This project integrates **CrewAI** agents, tasks, and processes to generate and 
 
 **Idea Generator and Validator workflow**
 
-<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Idea_generator_and_validator/Image.jpg?raw=true" alt="Idea generator" width="700"/>
+<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Build_real_world_agents/Idea_generator_and_validator/Image.jpg?raw=true" alt="Idea generator" width="700"/>
 **Key Features**
 
 1. Automated Idea Generation : Uses an N8N webhook to generate business ideas from user prompts.  

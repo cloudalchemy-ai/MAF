@@ -4,7 +4,7 @@
 Handoff orchestration allows agents to transfer control to one another based on context or user request. Each agent can “handoff” the conversation to another agent with the appropriate expertise, ensuring the right agent handles each part of the task.
 
 **Sequential orchestration workflow**  
-<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Handoff_orchestration/Fig.jpg?raw=true" alt="Sequential Orchestration Workflow" width="700"/>
+<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Orchestration_workflows/Handoff_orchestration/Fig.jpg?raw=true" alt="Sequential Orchestration Workflow" width="700"/>
 
 **Key Features**
 

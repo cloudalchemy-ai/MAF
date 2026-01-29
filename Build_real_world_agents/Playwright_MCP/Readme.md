@@ -5,7 +5,7 @@ This project demonstrates how to integrate a local Model Context Protocol (MCP) 
 With this setup, you can issue natural language commands, such as crawling a website and listing all links to the agent, which then delegates browser automation tasks to the Playwright MCP tool. The agent uses OpenAI for language understanding and Playwright MCP for executing browser actions, making it easy to automate complex web tasks programmatically.  
 
 **Workflow**  
-<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Playwright_MCP/Image.jpg?raw=true" alt="workflow_for_website_automation" width="700"/>
+<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Build_real_world_agents/Playwright_MCP/Image.jpg?raw=true" alt="workflow_for_website_automation" width="700"/>
 
 
 
