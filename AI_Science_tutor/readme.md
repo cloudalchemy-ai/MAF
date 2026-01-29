@@ -1,12 +1,10 @@
 # **AI Science Tutor**
 
 **Overview**  
-This implementation demonstrates streaming and non-streaming examples of AzureAIClient  
-with agent-framework where we are building an AI Science Tutor which explains complex science topics to students using analogies and examples.
+This implementation demonstrates streaming and non-streaming examples of OpenAIResponsesClient with agent-framework where we are building an AI Science Tutor which explains complex science topics to students using analogies and examples.
 
 **Workflow**  
-**Sequential orchestration workflow**  
-<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/AI_Science_tutor/image.jpg?raw=true" alt="Workflow" width="700"/>
+<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/AI_Science_tutor/Image.jpg?raw=true" alt="Workflow" width="700"/>
 
 **Key Features**
 
