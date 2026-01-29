@@ -5,7 +5,7 @@ The sequential orchestration pattern organizes agents in a pipeline. Each agent 
 
 **Sequential orchestration workflow**
 
-<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Sequential_orchestration/Image.jpg?raw=true" alt="Sequential Orchestration Workflow" width="700"/>
+<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Orchestration_workflows/Sequential_orchestration/Image.jpg?raw=true" alt="Sequential Orchestration Workflow" width="700"/>
 
 **Key Features**
 
