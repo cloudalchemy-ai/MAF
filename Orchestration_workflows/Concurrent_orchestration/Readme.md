@@ -4,7 +4,7 @@
 The concurrent orchestration pattern enables multiple agents to work on the same task in parallel. Each agent processes the input independently, and their results are aggregated. This is useful for brainstorming, ensemble reasoning, or voting systems.
 
 **Concurrent orchestration workflow**  
-<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Concurrent_orchestration/Image.jpg?raw=true" alt="Sequential Orchestration Workflow" width="700"/>
+<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Orchestration_workflows/Concurrent_orchestration/Image.jpg?raw=true" alt=" Orchestration Workflow" width="700"/>
 
 **Key Features**
 
