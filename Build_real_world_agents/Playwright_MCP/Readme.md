@@ -8,7 +8,6 @@ With this setup, you can issue natural language commands, such as crawling a web
 <img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Build_real_world_agents/Playwright_MCP/Image.jpg?raw=true" alt="workflow_for_website_automation" width="700"/>
 
 
-
 **Key Features**
 
 1. OpenAIChatClient  
@@ -20,7 +19,7 @@ With this setup, you can issue natural language commands, such as crawling a web
 Before starting, make sure you have:
 
 * OpenAI Credentials in env.  
-  * OPENAI\_CHAT\_MODEL\_ID\="gpt-4o"  
+  * OPENAI\_RESPONSES\_MODEL\_ID\="gpt-4o"  
   * OPENAI\_API\_KEY\="Your API Key"
 
 
