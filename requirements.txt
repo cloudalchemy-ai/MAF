@@ -1,0 +1,3 @@
+agent-framework==1.0.0b251209
+agent-framework-azure-ai==1.0.0b260130
+azure-identity>=1.15.0
