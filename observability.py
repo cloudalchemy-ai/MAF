@@ -14,7 +14,7 @@ from agent_framework.observability import (
     get_tracer,
 )
 from agent_framework.openai import OpenAIResponsesClient
-
+import sys
 from azure.ai.projects.aio import AIProjectClient
 from azure.identity.aio import AzureCliCredential
 from azure.monitor.opentelemetry import configure_azure_monitor
@@ -22,6 +22,8 @@ from azure.monitor.opentelemetry import configure_azure_monitor
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.span import format_trace_id
 
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # Load environment variables (AZURE_AI_PROJECT_ENDPOINT)
 dotenv.load_dotenv()

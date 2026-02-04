@@ -1,3 +1,11 @@
 agent-framework==1.0.0b251209
 agent-framework-azure-ai==1.0.0b260130
 azure-identity>=1.15.0
+python-dotenv==1.2.1
+pydantic==2.12.5
+agent-framework==1.0.0b260130
+azure-ai-projects==2.0.0b3
+azure-identity==1.25.1
+azure-monitor-opentelemetry==1.8.3
+opentelemetry-api==1.39.0
+opentelemetry-sdk==1.39.0
