@@ -71,12 +71,10 @@ python agent\_with\_a2a.py
 <img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Build_real_world_agents/Product_conceptualizer/fig2.jpg?raw=true" alt="Product conceptualizer" width="300"/>
 
 1. **agent.py**
-
-Defines the remote agent and declares it as a root agent.
-
+   Defines the remote agent and declares it as a root agent.
 2. **agentexecutor.py**  
    Activates the agent, making it accessible to the host agent. Serves as a link between the host and remote agents.  
-3. [**main.py**](http://main.py)  
+3. **main.py**
    Initializes and activates the remote agent.  
    
 
