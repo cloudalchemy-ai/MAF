@@ -68,7 +68,7 @@ python agent\_with\_a2a.py
 7. Enter the product idea to the agent.
 
 **Remote agent setup**  
-<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Build_real_world_agents/Product_conceptualizer/fig2.jpg?raw=true" alt="Product conceptualizer" width="700"/>
+<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Build_real_world_agents/Product_conceptualizer/fig2.jpg?raw=true" alt="Product conceptualizer" width="300"/>
 
 1. **agent.py**
 
