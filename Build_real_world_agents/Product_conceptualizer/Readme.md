@@ -4,9 +4,9 @@
 This Product Conceptualizer project provides an AI-powered agent system for generating detailed, structured product concepts from simple business ideas. It leverages Google’s ADK (Agent Development Kit), A2A (Agent-to-Agent) protocol, and Microsoft Agent Framework to enable interactions.
 
 **A2A Integration Workflow**  
-<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Build_real_world_agents/Product_conceptualizer/Image.jpg?raw=true" alt="Product conceptualizer" width="700"/>
+<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Build_real_world_agents/Product_conceptualizer/fig1.jpg?raw=true" alt="Product conceptualizer" width="700"/
 
-**Key Features**
+>**Key Features**
 
 1. Google ADK  
 2. Gemini API Key  
@@ -66,3 +66,18 @@ cd ..
 python agent\_with\_a2a.py
 
 7. Enter the product idea to the agent.
+
+**Remote agent setup**  
+<img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Build_real_world_agents/Product_conceptualizer/fig2.jpg?raw=true" alt="Product conceptualizer" width="700"/
+
+1. **agent.py**
+
+Defines the remote agent and declares it as a root agent.
+
+2. **agentexecutor.py**  
+   Activates the agent, making it accessible to the host agent. Serves as a link between the host and remote agents.  
+3. [**main.py**](http://main.py)  
+   Initializes and activates the remote agent.  
+   
+
+   
