@@ -70,6 +70,19 @@ Your project should look like this :
     ![][image6]  
 8. Click “Execute workflow” to get the app up and running.
 
+
+**Remote agent (N8N \+ CrewAI) setup**
+
+1. Business idea generator tool :   
+   1. Acts as an external tool for AI agents.   
+   2. Calls an N8N workflow to generate business ideas and returns the raw response from the webhook.  
+2. BusinessIdeaAgent Class :  
+   1. Encapsulates the idea validation workflow.  
+   2. It combines agent logic, task definition and execution flow.  
+3. Validator agent :  
+   1. Act as a business idea validator agent.  
+   2. Call a business idea generator tool and validate the idea and return the validation results. 
+
 **Running the system**
 
 1. Setup and activate the virtual environment.  
