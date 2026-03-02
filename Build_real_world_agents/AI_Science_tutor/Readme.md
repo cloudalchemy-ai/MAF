@@ -1,24 +1,24 @@
 # **AI Science Tutor**
 
 **Overview**  
-This implementation demonstrates streaming and non-streaming examples of AzureOpenAIResponsesClient with agent-framework where we are building an AI Science Tutor which explains complex science topics to students using analogies and examples.
+This implementation demonstrates streaming and non-streaming examples of OpenAIResponsesClient with agent-framework where we are building an AI Science Tutor which explains complex science topics to students using analogies and examples.
 
 **Workflow**  
 <img src="https://github.com/cloudalchemy-ai/MAF/blob/main/Build_real_world_agents/AI_Science_tutor/image.jpg?raw=true" alt="Workflow" width="700"/>
 
 **Key Features**
 
-1. AzureOpenAIResponsesClient  
-2. Azure credentials
+1. OpenAIResponsesClient  
+2. OpenAI API Key
 
 **Prerequisites**
 
 Before starting, make sure you have:
 
-* Azure Credentials in env.  
-  * AZURE\_AI\_PROJECT\_ENDPOINT \="your\_endpoint"  
-  * AZURE\_OPENAI\_RESPONSES\_DEPLOYMENT\_NAME \="your\_deployment\_name"
+* OpenAI Credentials in env.  
+  * OPENAI\_RESPONSES\_MODEL\_ID\="gpt-4o"  
+  * OPENAI\_API\_KEY\="Your API Key"
 
 
 * Agent-framework installed.  
-  * pip install agent-framework==1.0.0rc2
+  * pip install agent-framework
