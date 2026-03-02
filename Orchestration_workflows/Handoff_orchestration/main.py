@@ -4,38 +4,34 @@ from collections.abc import AsyncIterable, Iterator, Sequence
 from typing import cast
 
 from agent_framework import (
-    ChatMessage,
-    HandoffBuilder,
-    HandoffUserInputRequest,
-    RequestInfoEvent,
+    Message,
     WorkflowEvent,
-    WorkflowOutputEvent,
 )
+from dotenv import load_dotenv
+
+from agent_framework.orchestrations import HandoffAgentUserRequest, HandoffBuilder
 from agent_framework.azure import AzureOpenAIChatClient
 from azure.identity import AzureCliCredential
 
-# if sys.platform == "win32":
-#     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
+if sys.version_info >= (3, 12):
+    pass  # pragma: no cover
+else:
+    pass  # pragma: no cover
+load_dotenv()
 
 CUSTOMER_PROMPT = "Hi, I need help with my recent order #12345. The product arrived damaged, and I’d like to request a replacement."
 
 SCRIPTED_RESPONSES = [
-    "Yes, the item was completely damaged when it arrived. Please arrange a replacement to be shipped to the same address.",
-    "Thanks! Can you tell me when the replacement will be delivered?",
-    "I just want to make sure I won’t be charged again for shipping or replacement costs.",
-    "Actually, the last time I contacted support about this, it wasn’t resolved properly. Could I please speak with a supervisor?",
-    "Thank you for your help!"
+    "The item arrived damaged. I'd like a replacement shipped to the same address.",
+    "Great! Can you confirm the shipping cost won't be charged again?",
+    "Thanks for confirming!",
 ]
 
 
-######################################################################
 # Agent Framework orchestration path
-######################################################################
-
 
 def _create_af_agents(client: AzureOpenAIChatClient):
-    support = client.create_agent(
+    support = client.as_agent(
         name="SupportCoordinator",
         instructions=(
             "You are the main customer support coordinator. Greet the customer and understand their issue.\n"
@@ -46,19 +42,19 @@ def _create_af_agents(client: AzureOpenAIChatClient):
             "Always be polite and helpful. If unsure, ask clarifying questions."
         ),
     )
-    billing = client.create_agent(
+    billing = client.as_agent(
         name="BillingAgent",
         instructions=(
             "You are a billing specialist. Handle questions about invoices, payments, and account charges.\n"
             "If the request is not about billing, route back to SupportCoordinator."        ),
     )
-    technical = client.create_agent(
+    technical = client.as_agent(
         name="TechnicalAgent",
         instructions=(
             "You are a technical support specialist. Help with technical issues and troubleshooting.\n"
             "If the request is not about technical issues, route back to SupportCoordinator."        ),
     )
-    supervisor = client.create_agent(
+    supervisor = client.as_agent(
         name="SupervisorAgent",
         instructions=(
             "You are the support supervisor. Handle escalations and unresolved issues. Be empathetic and decisive.\n"
@@ -71,37 +67,42 @@ async def _drain_events(stream: AsyncIterable[WorkflowEvent]) -> list[WorkflowEv
     return [event async for event in stream]
 
 
-def _collect_handoff_requests(events: list[WorkflowEvent]) -> list[RequestInfoEvent]:
-    requests: list[RequestInfoEvent] = []
+def _collect_handoff_requests(events: list[WorkflowEvent]) -> list[WorkflowEvent]:
+    requests: list[WorkflowEvent] = []
     for event in events:
-        if isinstance(event, RequestInfoEvent) and isinstance(event.data, HandoffUserInputRequest):
+        if event.type == "request_info" and isinstance(event.data, HandoffAgentUserRequest):
             requests.append(event)
     return requests
 
 
-def _extract_final_conversation(events: list[WorkflowEvent]) -> list[ChatMessage]:
+
+def _extract_final_conversation(events: list[WorkflowEvent]) -> list[Message]:
     for event in events:
-        if isinstance(event, WorkflowOutputEvent):
-            data = cast(list[ChatMessage], event.data)
+        if event.type == "output":
+            data = cast(list[Message], event.data)
             return data
     return []
 
 
 async def run_agent_framework_example(initial_task: str, scripted_responses: Sequence[str]) -> str:
     client = AzureOpenAIChatClient(credential=AzureCliCredential())
-    support, billing, technical, supervisor = _create_af_agents(client)
+    triage, refund, status, returns = _create_af_agents(client)
 
     workflow = (
-        HandoffBuilder(name="af_handoff_migration", participants=[support, billing, technical, supervisor], )
-        .set_coordinator(support)
-        .add_handoff(support, [billing, technical, supervisor])
-        .add_handoff(billing, [technical, support])
-        .add_handoff(technical, [billing, support])
-        .add_handoff(supervisor, support)
+        HandoffBuilder(
+            name="af_handoff",
+            participants=[triage, refund, status, returns],
+            termination_condition=lambda conv: sum(1 for m in conv if m.role == "user") >= 4,
+        )
+        .with_start_agent(triage)
+        .add_handoff(triage, [refund, status, returns])
+        .add_handoff(refund, [status, triage])
+        .add_handoff(status, [refund, triage])
+        .add_handoff(returns, [triage])
         .build()
     )
 
-    events = await _drain_events(workflow.run_stream(initial_task))
+    events = await _drain_events(workflow.run(initial_task, stream=True))
     pending = _collect_handoff_requests(events)
     scripted_iter = iter(scripted_responses)
 
@@ -111,8 +112,8 @@ async def run_agent_framework_example(initial_task: str, scripted_responses: Seq
             user_reply = next(scripted_iter)
         except StopIteration:
             user_reply = "Thanks, that's all."
-        responses = {request.request_id: user_reply for request in pending}
-        final_events = await _drain_events(workflow.send_responses_streaming(responses))
+        responses = {request.request_id: [Message(role="user", text=user_reply)] for request in pending}
+        final_events = await _drain_events(workflow.run(stream=True, responses=responses))
         pending = _collect_handoff_requests(final_events)
 
     conversation = _extract_final_conversation(final_events)
@@ -125,7 +126,7 @@ async def run_agent_framework_example(initial_task: str, scripted_responses: Seq
         text = message.text or ""
         if not text.strip():
             continue
-        speaker = message.author_name or message.role.value
+        speaker = message.author_name or message.role
         lines.append(f"{speaker}: {text}")
     return "\n".join(lines)
 
