@@ -21,7 +21,9 @@ Before starting, make sure you have:
   * AZURE\_AI\_MODEL\_DEPLOYMENT\_NAME\="YOUR\_DEPLOYMENT\_NAME"  
   * OPENAI\_API\_KEY="YOUR\_API\_KEY"  
   * OPENAI\_RESPONSES\_MODEL\_ID\="gpt-4o"  
-* Agent-framework installed.  
-  * pip install agent-framework 
+  * AZURE\_OPENAI\_ENDPOINT\="YOUR\_ENDPOINT"  
+  * AZURE\_OPENAI\_CHAT\_DEPLOYMENT\_NAME\="gpt-4o"
 
-  
+
+* Agent-framework installed.  
+  * pip install agent-framework==1.0.0rc2

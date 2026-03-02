@@ -1,1 +1,1 @@
-agent-framework
+agent-framework==1.0.0rc2
