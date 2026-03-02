@@ -2,13 +2,14 @@ import asyncio
 from collections.abc import Sequence
 import sys
 from typing import cast
-from agent_framework import ChatMessage, ConcurrentBuilder, WorkflowOutputEvent
+from agent_framework import Message, Agent
+from agent_framework.orchestrations import ConcurrentBuilder
 from agent_framework.azure import AzureOpenAIChatClient
-from agent_framework.azure import AzureAIClient
+from agent_framework.azure import AzureAIProjectAgentProvider
 from azure.identity.aio import AzureCliCredential
 from agent_framework.openai import OpenAIResponsesClient
 from agent_framework import (
-    WorkflowOutputEvent,
+    WorkflowEvent,
     handler,
 )
 from typing import Any, cast
@@ -18,11 +19,11 @@ if sys.platform == "win32":
 
 PROMPT = "Plan a trip to paris."
 
-async def run_agent_framework_example(prompt: str) -> Sequence[list[ChatMessage]]:
+async def main(prompt: str) -> Sequence[list[Message]]:
     chat_client = AzureOpenAIChatClient()
     credential = AzureCliCredential()
     # Agent 1 - Food agent
-    food_agent = chat_client.create_agent(
+    food_agent = chat_client.as_agent(
         instructions=("You are a culinary and dining expert. For any travel destination, suggest:\n"
             "- Popular local dishes and specialties\n"
             "- Recommended restaurants (budget, mid-range, fine dining)\n"
@@ -33,7 +34,7 @@ async def run_agent_framework_example(prompt: str) -> Sequence[list[ChatMessage]
         name="FoodExpert",
     )
     # Agent 2 - Accommodation agent
-    accodomation_agent = chat_client.create_agent(
+    accodomation_agent = chat_client.as_agent(
         instructions=("You are a hotel and accommodation expert. For any travel destination, provide:\n"
             "- 3-4 accommodation recommendations (budget, mid-range, luxury)\n"
             "- Brief description of each option\n"
@@ -44,7 +45,7 @@ async def run_agent_framework_example(prompt: str) -> Sequence[list[ChatMessage]
         name="AccommodationExpert",
     )
     # Agent 3 - Activities Agent
-    activities_agent = AzureAIClient(credential=credential).create_agent(
+    activities_agent = await AzureAIProjectAgentProvider(credential=credential).create_agent(
         instructions = (  # Instructions for activities and attractions
             "You are a travel activities and attractions expert. For any destination, suggest:\n"
             "- Must-see attractions and landmarks\n"
@@ -57,7 +58,7 @@ async def run_agent_framework_example(prompt: str) -> Sequence[list[ChatMessage]
         name = "ActivitiesExpert",
     )
     # Agent 4 - Transportation Agent
-    transport_agent = AzureAIClient(credential=credential).create_agent(
+    transport_agent = await AzureAIProjectAgentProvider(credential=credential).create_agent(
         instructions = (  # Instructions for transportation options
             "You are a transportation and logistics expert. For any travel destination, provide:\n"
             "- Best ways to get there (flights, trains, buses)\n"
@@ -70,7 +71,8 @@ async def run_agent_framework_example(prompt: str) -> Sequence[list[ChatMessage]
         name = "TransportExpert",
     )
     # Agent 5 - Budgeting Agent
-    budget_agent = OpenAIResponsesClient().create_agent(
+    budget_agent = Agent (
+        client = OpenAIResponsesClient(),
         instructions = (  # Instructions for budgeting and cost-saving
             "You are a travel budgeting and cost-saving expert. For any destination, provide:\n"
             "- Average daily budget estimates (accommodation, food, activities, transport)\n"
@@ -83,42 +85,56 @@ async def run_agent_framework_example(prompt: str) -> Sequence[list[ChatMessage]
         name = "BudgetExpert",
     )
     #defining the workflow with all 5 agents
-    workflow = ConcurrentBuilder().participants([food_agent, accodomation_agent, activities_agent, transport_agent, budget_agent]).build()
+    workflow = ConcurrentBuilder(participants=[food_agent, accodomation_agent, activities_agent, transport_agent, budget_agent]).build()
 
-    outputs: list[list[ChatMessage]] = []
-    async for event in workflow.run_stream(prompt):
-        if isinstance(event, WorkflowOutputEvent):
-            outputs.append(cast(list[ChatMessage], event.data))
+#     outputs: list[list[Message]] = []
+#     async for event in workflow.run(prompt):
+#         if isinstance(event, WorkflowEvent):
+#             outputs.append(cast(list[Message], event.data))
 
-    return outputs
+#     return outputs
 
 
 
-#printing the outputs from agent framework
-def _print_agent_framework_outputs(conversations: Sequence[Sequence[ChatMessage]]) -> None:
-    if not conversations:
-        print("No Agent Framework output.")
-        return
+# #printing the outputs from agent framework
+# def _print_agent_framework_outputs(conversations: Sequence[Sequence[Message]]) -> None:
+#     if not conversations:
+#         print("No Agent Framework output.")
+#         return
 
-    print("\n===== FINAL AGGREGATED RESULTS =====")
-    print(f"Total conversations: {len(conversations)}\n")
+#     print("\n===== FINAL AGGREGATED RESULTS =====")
+#     print(f"Total conversations: {len(conversations)}\n")
     
-    for index, conversation in enumerate(conversations, start=1):
-        print(f"\n{'='*80}")
-        print(f"Conversation {index} ({len(conversation)} messages)")
-        print("="*80)
-        for msg_idx, message in enumerate(conversation, start=1):
-            name = message.author_name or "assistant"
-            print(f"\n[Message {msg_idx} - {name}]")
-            print("-" * 80)
-            print(message.text)
-        print()
+#     for index, conversation in enumerate(conversations, start=1):
+#         print(f"\n{'='*80}")
+#         print(f"Conversation {index} ({len(conversation)} messages)")
+#         print("="*80)
+#         for msg_idx, message in enumerate(conversation, start=1):
+#             name = message.author_name or "assistant"
+#             print(f"\n[Message {msg_idx} - {name}]")
+#             print("-" * 80)
+#             print(message.text)
+#         print()
 
 
-async def main() -> None:
-    agent_framework_outputs = await run_agent_framework_example(PROMPT)
-    _print_agent_framework_outputs(agent_framework_outputs)
+# async def main() -> None:
+#     agent_framework_outputs = await run_agent_framework_example(PROMPT)
+#     _print_agent_framework_outputs(agent_framework_outputs)
+
+# if __name__ == "__main__":
+#     asyncio.run(main())
+    
+    # 3) Run with a single prompt and pretty-print the final combined messages
+    events = await workflow.run(PROMPT)
+    outputs = events.get_outputs()
+
+    if outputs:
+        print("===== Final Aggregated Conversation (messages) =====")
+        for output in outputs:
+            messages: list[Message] | Any = output
+            for i, msg in enumerate(messages, start=1):
+                name = msg.author_name if msg.author_name else "user"
+                print(f"{'-' * 60}\n\n{i:02d} [{name}]:\n{msg.text}")
 
 if __name__ == "__main__":
     asyncio.run(main())
-

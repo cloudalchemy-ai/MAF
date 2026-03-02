@@ -1,96 +1,175 @@
 # Copyright (c) Microsoft. All rights reserved.
 
 import asyncio
-import logging
 import os
-from random import randint
-from typing import Annotated
+from typing import Any
 
-import dotenv
-from agent_framework import ChatAgent
-from agent_framework.observability import create_resource, enable_instrumentation, get_tracer
+from agent_framework import Message, Agent
+from agent_framework.azure import AzureOpenAIResponsesClient
+from agent_framework.orchestrations import ConcurrentBuilder
+from azure.identity import AzureCliCredential
+from agent_framework.azure import AzureOpenAIChatClient
+from agent_framework.azure import AzureAIProjectAgentProvider
 from agent_framework.openai import OpenAIResponsesClient
-from azure.ai.projects.aio import AIProjectClient
-from azure.identity.aio import AzureCliCredential
-from azure.monitor.opentelemetry import configure_azure_monitor
-from opentelemetry.trace import SpanKind
-from opentelemetry.trace.span import format_trace_id
-from pydantic import Field
 
 """
-This sample shows you can can setup telemetry in Microsoft Foundry for a custom agent.
-First ensure you have a Foundry workspace with Application Insights enabled.
-And use the Operate tab to Register an Agent.
-Set the OpenTelemetry agent ID to the value used below in the ChatAgent creation: `weather-agent` (or change both).
-The sample uses the Azure Monitor OpenTelemetry exporter to send traces to Application Insights.
-So ensure you have the `azure-monitor-opentelemetry` package installed.
+Sample: Concurrent fan-out/fan-in (agent-only API) with default aggregator
+
+Build a high-level concurrent workflow using ConcurrentBuilder and three domain agents.
+The default dispatcher fans out the same user prompt to all agents in parallel.
+The default aggregator fans in their results and yields output containing
+a list[Message] representing the concatenated conversations from all agents.
+
+Demonstrates:
+- Minimal wiring with ConcurrentBuilder(participants=[...]).build()
+- Fan-out to multiple agents, fan-in aggregation of final ChatMessages
+- Workflow completion when idle with no pending work
+
+Prerequisites:
+- AZURE_AI_PROJECT_ENDPOINT must be your Azure AI Foundry Agent Service (V2) project endpoint.
+- Azure OpenAI access configured for AzureOpenAIResponsesClient (use az login + env vars)
+- Familiarity with Workflow events (WorkflowEvent)
 """
 
-# For loading the `AZURE_AI_PROJECT_ENDPOINT` environment variable
-dotenv.load_dotenv()
 
-logger = logging.getLogger(__name__)
+async def main() -> None:
+    # 1) Create three domain agents using AzureOpenAIResponsesClient
+    chat_client = AzureOpenAIChatClient()
+    credential = AzureCliCredential()
 
+    # Agent 1 - Food agent
+    food_agent = chat_client.as_agent(
+        instructions=("You are a culinary and dining expert. For any travel destination, suggest:\n"
+            "- Popular local dishes and specialties\n"
+            "- Recommended restaurants (budget, mid-range, fine dining)\n"
+            "- Street food options\n"
+            "- Dining etiquette tips\n"
+            "- Unique food experiences\n"
+            "Provide 5-7 diverse food recommendations with brief descriptions."),
+        name="FoodExpert",
+    )
+    # Agent 2 - Accommodation agent
+    accodomation_agent = chat_client.as_agent(
+        instructions=("You are a hotel and accommodation expert. For any travel destination, provide:\n"
+            "- 3-4 accommodation recommendations (budget, mid-range, luxury)\n"
+            "- Brief description of each option\n"
+            "- Approximate price ranges\n"
+            "- Location advantages\n"
+            "- Booking tips\n"
+            "Focus on practical, actionable accommodation advice."),
+        name="AccommodationExpert",
+    )
 
-async def get_weather(
-    location: Annotated[str, Field(description="The location to get the weather for.")],
-) -> str:
-    """Get the weather for a given location."""
-    await asyncio.sleep(randint(0, 10) / 10.0)  # Simulate a network call
-    conditions = ["sunny", "cloudy", "rainy", "stormy"]
-    return f"The weather in {location} is {conditions[randint(0, 3)]} with a high of {randint(10, 30)}°C."
+    # Agent 3 - Activities Agent
+    activities_agent = await AzureAIProjectAgentProvider(credential=credential).create_agent(
+        instructions = (  # Instructions for activities and attractions
+            "You are a travel activities and attractions expert. For any destination, suggest:\n"
+            "- Must-see attractions and landmarks\n"
+            "- Unique local experiences\n"
+            "- Seasonal activities\n"
+            "- Day trip options\n"
+            "- Cultural experiences\n"
+            "Provide 5-7 diverse activity recommendations with brief descriptions."
+        ),
+        name = "ActivitiesExpert",
+    )
+    # Agent 4 - Transportation Agent
+    transport_agent = await AzureAIProjectAgentProvider(credential=credential).create_agent(
+        instructions = (  # Instructions for transportation options
+            "You are a transportation and logistics expert. For any travel destination, provide:\n"
+            "- Best ways to get there (flights, trains, buses)\n"
+            "- Local transportation options (public transit, car rentals, rideshares)\n"
+            "- Cost estimates\n"
+            "- Travel time considerations\n"
+            "- Tips for navigating the area efficiently\n"
+            "Focus on practical transportation advice."
+        ),
+        name = "TransportExpert",
+    )
 
+    # Agent 5 - Budgeting Agent
+    budget_agent = Agent (
+        client = OpenAIResponsesClient(),
+        instructions = (  # Instructions for budgeting and cost-saving
+            "You are a travel budgeting and cost-saving expert. For any destination, provide:\n"
+            "- Average daily budget estimates (accommodation, food, activities, transport)\n"
+            "- Money-saving tips\n"
+            "- Affordable alternatives for popular attractions\n"
+            "- Best times to visit for lower costs\n"
+            "- Budget-friendly accommodation and dining options\n"
+            "Focus on practical budgeting advice."
+        ),
+        name = "BudgetExpert",
+    )
+    # 2) Build a concurrent workflow
+    # Participants are either Agents (type of SupportsAgentRun) or Executors
+    workflow = ConcurrentBuilder(participants=[food_agent, accodomation_agent, activities_agent, transport_agent, budget_agent]).build()
 
-async def main():
-    async with (
-        AzureCliCredential() as credential,
-        AIProjectClient(endpoint=os.environ["AZURE_AI_PROJECT_ENDPOINT"], credential=credential) as project_client,
-    ):
-        # This will enable tracing and configure the application to send telemetry data to the
-        # Application Insights instance attached to the Azure AI project.
-        # This will override any existing configuration.
-        try:
-            conn_string = await project_client.telemetry.get_application_insights_connection_string()
-        except Exception:
-            logger.warning(
-                "No Application Insights connection string found for the Azure AI Project. "
-                "Please ensure Application Insights is configured in your Azure AI project, "
-                "or call configure_otel_providers() manually with custom exporters."
-            )
-            return
-        configure_azure_monitor(
-            connection_string=conn_string,
-            enable_live_metrics=True,
-            resource=create_resource(),
-            enable_performance_counters=False,
-        )
-        # This call is not necessary if you have the environment variable ENABLE_INSTRUMENTATION=true set
-        # If not or set to false, or if you want to enable or disable sensitive data collection, call this function.
-        enable_instrumentation(enable_sensitive_data=True)
-        print("Observability is set up. Starting Weather Agent...")
+    # 3) Run with a single prompt and pretty-print the final combined messages
+    events = await workflow.run("Plan a trip to paris.")
+    outputs = events.get_outputs()
 
-        questions = ["What's the weather in Amsterdam?", "and in Paris, and which is better?", "Why is the sky blue?"]
+    if outputs:
+        print("===== Final Aggregated Conversation (messages) =====")
+        for output in outputs:
+            messages: list[Message] | Any = output
+            for i, msg in enumerate(messages, start=1):
+                name = msg.author_name if msg.author_name else "user"
+                print(f"{'-' * 60}\n\n{i:02d} [{name}]:\n{msg.text}")
 
-        with get_tracer().start_as_current_span("Weather Agent Chat", kind=SpanKind.CLIENT) as current_span:
-            print(f"Trace ID: {format_trace_id(current_span.get_span_context().trace_id)}")
+    """
+    Sample Output:
 
-            agent = ChatAgent(
-                chat_client=OpenAIResponsesClient(),
-                tools=get_weather,
-                name="WeatherAgent",
-                instructions="You are a weather assistant.",
-                id="weather-agent",
-            )
-            thread = agent.get_new_thread()
-            for question in questions:
-                print(f"\nUser: {question}")
-                print(f"{agent.display_name}: ", end="")
-                async for update in agent.run_stream(
-                    question,
-                    thread=thread,
-                ):
-                    if update.text:
-                        print(update.text, end="")
+    ===== Final Aggregated Conversation (messages) =====
+    ------------------------------------------------------------
+
+    01 [user]:
+    We are launching a new budget-friendly electric bike for urban commuters.
+    ------------------------------------------------------------
+
+    02 [researcher]:
+    **Insights:**
+
+    - **Target Demographic:** Urban commuters seeking affordable, eco-friendly transport;
+        likely to include students, young professionals, and price-sensitive urban residents.
+    - **Market Trends:** E-bike sales are growing globally, with increasing urbanization,
+        higher fuel costs, and sustainability concerns driving adoption.
+    - **Competitive Landscape:** Key competitors include brands like Rad Power Bikes, Aventon,
+        Lectric, and domestic budget-focused manufacturers in North America, Europe, and Asia.
+    - **Feature Expectations:** Customers expect reliability, ease-of-use, theft protection,
+        lightweight design, sufficient battery range for daily city commutes (typically 25-40 miles),
+        and low-maintenance components.
+
+    **Opportunities:**
+
+    - **First-time Buyers:** Capture newcomers to e-biking by emphasizing affordability, ease of
+        operation, and cost savings vs. public transit/car ownership.
+    ...
+    ------------------------------------------------------------
+
+    03 [marketer]:
+    **Value Proposition:**
+    "Empowering your city commute: Our new electric bike combines affordability, reliability, and
+        sustainable design—helping you conquer urban journeys without breaking the bank."
+
+    **Target Messaging:**
+
+    *For Young Professionals:*
+    ...
+    ------------------------------------------------------------
+
+    04 [legal]:
+    **Constraints, Disclaimers, & Policy Concerns for Launching a Budget-Friendly Electric Bike for Urban Commuters:**
+
+    **1. Regulatory Compliance**
+    - Verify that the electric bike meets all applicable federal, state, and local regulations
+        regarding e-bike classification, speed limits, power output, and safety features.
+    - Ensure necessary certifications (e.g., UL certification for batteries, CE markings if sold internationally) are obtained.
+
+    **2. Product Safety**
+    - Include consumer safety warnings regarding use, battery handling, charging protocols, and age restrictions.
+    ...
+    """  # noqa: E501
 
 
 if __name__ == "__main__":
