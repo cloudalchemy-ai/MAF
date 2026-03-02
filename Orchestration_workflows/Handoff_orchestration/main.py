@@ -131,11 +131,7 @@ async def run_agent_framework_example(initial_task: str, scripted_responses: Seq
     return "\n".join(lines)
 
 
-######################################################################
 # Console entry point
-######################################################################
-
-
 async def main() -> None:
     print("===== Agent Framework Handoff =====")
     af_transcript = await run_agent_framework_example(CUSTOMER_PROMPT, SCRIPTED_RESPONSES)
