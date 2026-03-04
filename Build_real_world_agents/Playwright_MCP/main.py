@@ -1,7 +1,8 @@
 import asyncio
 from agent_framework import Agent, MCPStdioTool
 from agent_framework.openai import OpenAIResponsesClient
-
+from dotenv import load_dotenv
+load_dotenv()
 
 async def playwright_mcp_news_agent():
     async with (
@@ -9,9 +10,10 @@ async def playwright_mcp_news_agent():
             name="PlaywrightMCPTool",
             command="npx",
             args=["@playwright/mcp@latest"],
+            load_prompts=False,
         ) as mcp_server,
         Agent(
-            chat_client=OpenAIResponsesClient(),
+            client=OpenAIResponsesClient(),
             name="NewsReaderAgent",
             instructions="""
             You are a helpful assistant that reads news websites like a human.
