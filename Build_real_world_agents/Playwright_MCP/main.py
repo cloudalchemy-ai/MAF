@@ -1,5 +1,5 @@
 import asyncio
-from agent_framework import ChatAgent, MCPStdioTool
+from agent_framework import Agent, MCPStdioTool
 from agent_framework.openai import OpenAIResponsesClient
 
 
@@ -10,13 +10,13 @@ async def playwright_mcp_news_agent():
             command="npx",
             args=["@playwright/mcp@latest"],
         ) as mcp_server,
-        ChatAgent(
+        Agent(
             chat_client=OpenAIResponsesClient(),
             name="NewsReaderAgent",
             instructions="""
             You are a helpful assistant that reads news websites like a human.
             Navigate pages, open articles, and summarise content clearly.
-            Focus on accuracy and clarity and use emojis.
+            Focus on accuracy and clarity and use emojis. 
             """
         ) as agent,
     ):
