@@ -2,5 +2,11 @@
 .env
 .myenv/
 .newenv/
-D:\Kshitij\MAF\Idea_generator_and_validator\testenv
-D:\Kshitij\MAF\Idea_generator_and_validator\myenv
+.testenv/
+myenv/
+testenv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
