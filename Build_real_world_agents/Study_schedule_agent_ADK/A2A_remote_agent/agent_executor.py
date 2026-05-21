@@ -1,145 +1,111 @@
-import asyncio
-import logging
-from collections.abc import AsyncGenerator
-
-from a2a.server.agent_execution import AgentExecutor
-from a2a.server.agent_execution.context import RequestContext
-from a2a.server.events.event_queue import EventQueue
+from a2a.server.agent_execution import AgentExecutor, RequestContext
+from a2a.server.events import EventQueue
 from a2a.server.tasks import TaskUpdater
 from a2a.types import (
-    FilePart,
-    FileWithBytes,
-    FileWithUri,
     Part,
     TaskState,
     TextPart,
-    UnsupportedOperationError,
 )
-from a2a.utils.errors import ServerError
-from google.adk import Runner
-from google.adk.events import Event
+from a2a.utils import new_agent_text_message, new_task
+from google.adk.artifacts import InMemoryArtifactService
+from google.adk.memory.in_memory_memory_service import InMemoryMemoryService
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
+class ADKAgentExecutor(AgentExecutor):
+    def __init__(
+        self,
+        agent,
+        status_message="Processing request...",
+        artifact_name="response",
+    ):
+        """Initialize a generic ADK agent executor.
 
-class StudyScheduleAgentExecutor(AgentExecutor):
-    """AgentExecutor for ADK Study Schedule Agent."""
-
-    def __init__(self, runner: Runner):
-        self.runner = runner
-        self._running_sessions = {}
-
-    def _run_agent(
-        self, session_id: str, new_message: types.Content
-    ) -> AsyncGenerator[Event, None]:
-        return self.runner.run_async(
-            session_id=session_id, user_id="study_schedule", new_message=new_message
+        Args:
+            agent: The ADK agent instance
+            status_message: Message to display while processing
+            artifact_name: Name for the response artifact
+        """
+        self.agent = agent
+        self.status_message = status_message
+        self.artifact_name = artifact_name
+        self.runner = Runner(
+            app_name=agent.name,
+            agent=agent,
+            artifact_service=InMemoryArtifactService(),
+            session_service=InMemorySessionService(),
+            memory_service=InMemoryMemoryService(),
         )
 
-    async def _process_request(
-        self, new_message: types.Content, session_id: str, task_updater: TaskUpdater
+    async def cancel(
+        self,
+        context: RequestContext,
+        event_queue: EventQueue,
     ) -> None:
-        session_obj = await self._upsert_session(session_id)
-        session_id = session_obj.id
-
-        async for event in self._run_agent(session_id, new_message):
-            if event.is_final_response():
-                parts = convert_genai_parts_to_a2a(
-                    event.content.parts if event.content and event.content.parts else []
-                )
-                logger.debug("Yielding final response: %s", parts)
-                await task_updater.add_artifact(parts)
-                await task_updater.complete()
-                break
-            if not event.get_function_calls():
-                logger.debug("Yielding update response")
-                await task_updater.update_status(
-                    TaskState.working,
-                    message=task_updater.new_agent_message(
-                        convert_genai_parts_to_a2a(
-                            event.content.parts
-                            if event.content and event.content.parts
-                            else []
-                        ),
-                    ),
-                )
-            else:
-                logger.debug("Skipping function call event")
-
-    async def execute(self, context: RequestContext, event_queue: EventQueue):
-        if not context.task_id or not context.context_id:
-            raise ValueError("RequestContext must have task_id and context_id")
-        if not context.message:
-            raise ValueError("RequestContext must have a message")
-
-        updater = TaskUpdater(event_queue, context.task_id, context.context_id)
-        if not context.current_task:
-            await updater.submit()
-        await updater.start_work()
-        await self._process_request(
-            types.UserContent(parts=convert_a2a_parts_to_genai(context.message.parts)),
-            context.context_id,
-            updater,
+        """Cancel the execution of a specific task."""
+        raise NotImplementedError(
+            "Cancellation is not implemented for ADKAgentExecutor."
         )
 
-    async def cancel(self, context: RequestContext, event_queue: EventQueue):
-        raise ServerError(error=UnsupportedOperationError())
+    async def execute(
+        self,
+        context: RequestContext,
+        event_queue: EventQueue,
+    ) -> None:
+        query = context.get_user_input()
+        task = context.current_task or new_task(context.message)
+        await event_queue.enqueue_event(task)
 
-    async def _upsert_session(self, session_id: str):
-        session = await self.runner.session_service.get_session(
-            app_name=self.runner.app_name, user_id="study_schedule", session_id=session_id
-        )
-        if session is None:
+        updater = TaskUpdater(event_queue, task.id, task.context_id)
+        if context.call_context:
+            user_id = context.call_context.user.user_name
+        else:
+            user_id = "a2a_user"
+
+        try:
+            # Update status with custom message
+            await updater.update_status(
+                TaskState.working,
+                new_agent_text_message(self.status_message, task.context_id, task.id),
+            )
+
+            # Process with ADK agent
             session = await self.runner.session_service.create_session(
-                app_name=self.runner.app_name,
-                user_id="study_schedule",
-                session_id=session_id,
+                app_name=self.agent.name,
+                user_id=user_id,
+                state={},
+                session_id=task.context_id,
             )
-        if session is None:
-            raise RuntimeError(f"Failed to get or create session: {session_id}")
-        return session
 
-
-# --- Conversion helpers ---
-
-def convert_a2a_parts_to_genai(parts: list[Part]) -> list[types.Part]:
-    return [convert_a2a_part_to_genai(p) for p in parts]
-
-
-def convert_a2a_part_to_genai(part: Part) -> types.Part:
-    root = part.root
-    if isinstance(root, TextPart):
-        return types.Part(text=root.text)
-    if isinstance(root, FilePart):
-        if isinstance(root.file, FileWithUri):
-            return types.Part(file_data=types.FileData(file_uri=root.file.uri, mime_type=root.file.mimeType))
-        if isinstance(root.file, FileWithBytes):
-            return types.Part(
-                inline_data=types.Blob(data=root.file.bytes.encode("utf-8"),
-                                       mime_type=root.file.mimeType or "application/octet-stream")
+            content = types.Content(
+                role="user", parts=[types.Part.from_text(text=query)]
             )
-        raise ValueError(f"Unsupported file type: {type(root.file)}")
-    raise ValueError(f"Unsupported part type: {type(part)}")
 
+            response_text = ""
+            async for event in self.runner.run_async(
+                user_id=user_id, session_id=session.id, new_message=content
+            ):
+                if event.is_final_response() and event.content and event.content.parts:
+                    for part in event.content.parts:
+                        if hasattr(part, "text") and part.text:
+                            response_text += part.text + "\n"
+                        elif hasattr(part, "function_call"):
+                            # Log or handle function calls if needed
+                            pass  # Function calls are handled internally by ADK
 
-def convert_genai_parts_to_a2a(parts: list[types.Part]) -> list[Part]:
-    return [convert_genai_part_to_a2a(p) for p in parts if (p.text or p.file_data or p.inline_data)]
+            # Add response as artifact with custom name
+            await updater.add_artifact(
+                [Part(root=TextPart(text=response_text))],
+                name=self.artifact_name,
+            )
 
+            await updater.complete()
 
-def convert_genai_part_to_a2a(part: types.Part) -> Part:
-    if part.text:
-        return Part(root=TextPart(text=part.text))
-    if part.file_data:
-        if not part.file_data.file_uri:
-            raise ValueError("File URI is missing")
-        return Part(root=FilePart(file=FileWithUri(uri=part.file_data.file_uri, mimeType=part.file_data.mime_type)))
-    if part.inline_data:
-        if not part.inline_data.data:
-            raise ValueError("Inline data is missing")
-        return Part(
-            root=FilePart(file=FileWithBytes(bytes=part.inline_data.data.decode("utf-8"),
-                                             mimeType=part.inline_data.mime_type))
-        )
-    raise ValueError(f"Unsupported part type: {part}")
+        except Exception as e:
+            await updater.update_status(
+                TaskState.failed,
+                new_agent_text_message(f"Error: {e!s}", task.context_id, task.id),
+                final=True,
+            )
