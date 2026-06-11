@@ -4,6 +4,7 @@ import chromadb
 from dotenv import load_dotenv
 from agent_framework import Agent, ContextProvider, Message
 from agent_framework.foundry import FoundryChatClient
+from agent_framework_ag_ui import add_agent_framework_fastapi_endpoint
 from azure.identity import DefaultAzureCredential
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -56,6 +57,10 @@ class ChatResponse(BaseModel):
 
 agent = build_agent()
 app = FastAPI(title="MAF RAG FastAPI", version="1.0.0")
+
+# AG-UI SSE endpoint expected by AGUIChatClient.
+add_agent_framework_fastapi_endpoint(app=app, agent=agent, path="/chat")
+
 
 @app.get("/health")
 async def health() -> dict[str, str]:
