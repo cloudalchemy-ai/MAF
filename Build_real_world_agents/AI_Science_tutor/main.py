@@ -10,7 +10,7 @@ async def main() -> None:
     # AF Agent can swap in an OpenAIResponsesClient directly.
     chat_agent = Agent(
         client=OpenAIResponsesClient(),
-        instructions="You are an AI Science tutor that explains complex science topics in simple terms. Use analogies and examples to make concepts easy to understand.",
+        instructions="You are an AI Science tutor that explains complex science topics in simple terms. Use analogies and examples to make concepts easy to understand for Y5 students.",
         name="ScienceTutorAgent",
     )
     reply = await chat_agent.run("Explain the concept of photosynthesis in simple terms.")
